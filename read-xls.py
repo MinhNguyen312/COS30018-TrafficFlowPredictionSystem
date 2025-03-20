@@ -2,12 +2,19 @@
 # training the AI Agent to predict the traffic flow.
 
 import pandas as pd
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+        "--location",
+        help="SCATS Location to process.")
+args = parser.parse_args()
 
 dataframe = pd.read_excel('Scats-Data-October-2006.xls',sheet_name='Data',header=1)
 
 dataframe['SCATS Number'] = dataframe['SCATS Number'].astype(str)
 
-filtered_df = dataframe[dataframe['SCATS Number'] == '2200']
+filtered_df = dataframe[dataframe['SCATS Number'] == args.location]
 
 time_intervals = [f'V{i:02}' for i in range(96)]    # read V00 - V95 in data sheet
 
@@ -24,10 +31,10 @@ df_melted['Interval'] = df_melted['Interval'].str[1:].astype(int)
 df_melted['Time'] = pd.to_datetime(df_melted['Date']) + pd.to_timedelta(df_melted['Interval'] *15, unit='min')
 
 
-df_melted['direction'] = df_melted['Location'].str.extract(r'(\b[E|W|N|S]\b)')
+df_melted['direction'] = df_melted['Location'].str.extract(r'(\b[N|S][W|E]\b|\b[E|W|N|S]\b)')
 
 df_melted = df_melted[['Time','Lane Flow (Veh/15 Minutes)','direction']]
 df_melted = df_melted.sort_values(by=['direction','Time']).reset_index(drop=True)
 
 print(df_melted)
-df_melted.to_csv("data/2200_flow_processed.csv", index=False)
+df_melted.to_csv(f"data/{args.location}_flow_processed.csv", index=False)
