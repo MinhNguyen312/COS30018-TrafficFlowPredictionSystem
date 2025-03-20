@@ -6,11 +6,13 @@ import warnings
 import numpy as np
 import pandas as pd
 from data.data import process_data
-from keras.models import load_model
-from keras.utils.vis_utils import plot_model
+from keras.api.models import load_model
 import sklearn.metrics as metrics
 import matplotlib as mpl
+from keras.api.utils import plot_model
 import matplotlib.pyplot as plt
+import tensorflow as tf
+import xgboost as xgb
 warnings.filterwarnings("ignore")
 
 
@@ -94,15 +96,34 @@ def plot_results(y_true, y_preds, names):
 
 
 def main():
-    lstm = load_model('model/lstm.h5')
-    gru = load_model('model/gru.h5')
-    saes = load_model('model/saes.h5')
-    models = [lstm, gru, saes]
-    names = ['LSTM', 'GRU', 'SAEs']
+    # lstm = load_model('model/lstm.h5')
+    # gru = load_model('model/gru.h5')
+    # saes = load_model('model/saes.h5')
+    # models = [lstm, gru, saes]
+    # names = ['LSTM', 'GRU', 'SAEs']
 
+    # lag = 12
+    # file1 = 'data/train.csv'
+    # file2 = 'data/test.csv'
+
+
+    #Testing LSTM 
+    lstm = load_model('model/lstm.h5', 
+                     custom_objects={"mse": tf.keras.losses.MeanSquaredError()})
+    gru = load_model('model/gru.h5',
+                    custom_objects={"mse": tf.keras.losses.MeanSquaredError()})
+    saes = load_model('model/saes.h5',
+                     custom_objects={"mse": tf.keras.losses.MeanSquaredError()})
+    # XGBoost
+
+    xgboost = xgb.Booster()
+    xgboost.load_model('model/xgboost.json')
+
+    models = [lstm,gru,saes,xgboost]
+    names = ['LSTM', 'GRU', 'SAEs','XGBoost']
     lag = 12
-    file1 = 'data/train.csv'
-    file2 = 'data/test.csv'
+    file1 = 'data/2000_training_data/2000_flow_train.csv'
+    file2 = 'data/2000_training_data/2000_flow_test.csv'
     _, _, X_test, y_test, scaler = process_data(file1, file2, lag)
     y_test = scaler.inverse_transform(y_test.reshape(-1, 1)).reshape(1, -1)[0]
 
@@ -110,11 +131,19 @@ def main():
     for name, model in zip(names, models):
         if name == 'SAEs':
             X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1]))
+        if name == 'XGBoost':
+            # Reshape data for XGBoost
+            X_test_xgb = np.reshape(X_test, (X_test.shape[0], X_test.shape[1]))
+            # Convert to DMatrix format required by XGBoost
+            dtest = xgb.DMatrix(X_test_xgb)
+            # Make predictions
+            predicted = model.predict(dtest)
         else:
             X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
-        file = 'images/' + name + '.png'
-        plot_model(model, to_file=file, show_shapes=True)
-        predicted = model.predict(X_test)
+        # file = 'images/' + name + '.png'
+        # plot_model(model, to_file=file, show_shapes=True)
+            predicted = model.predict(X_test)
+
         predicted = scaler.inverse_transform(predicted.reshape(-1, 1)).reshape(1, -1)[0]
         y_preds.append(predicted[:288])
         print(name)

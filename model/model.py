@@ -1,9 +1,9 @@
 """
 Defination of NN model
 """
-from keras.layers import Dense, Dropout, Activation
-from keras.layers.recurrent import LSTM, GRU
-from keras.models import Sequential
+from keras.api.layers import Dense, Dropout, Activation
+from keras.api.layers import LSTM, GRU
+from keras.api.models import Sequential
 
 
 def get_lstm(units):
@@ -19,9 +19,11 @@ def get_lstm(units):
     model = Sequential()
     model.add(LSTM(units[1], input_shape=(units[0], 1), return_sequences=True))
     model.add(LSTM(units[2]))
-    model.add(Dropout(0.2))
-    model.add(Dense(units[3], activation='sigmoid'))
-
+    # model.add(Dropout(0.2))
+    # model.add(Dense(units[3], activation='sigmoid'))
+    model.add(Dropout(0.1))
+    model.add(Dense(units[3], activation='linear'))
+    model.compile(loss='mse', optimizer='adam')
     return model
 
 
