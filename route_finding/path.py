@@ -3,3 +3,10 @@ class Path(object):
         self.path = path
         self.total_distance = total_distance
         self.time = time
+
+    def __repr__(self):
+        output = ""
+        for scat in self.path:
+            output += f"{scat.scats_id} - {scat.scat_name}\n"
+
+        return f"{output}Length: {len(self.path)}\nTotal distance travelled: {self.total_distance} km\nTotal travel time: {self.time / 60} mins"

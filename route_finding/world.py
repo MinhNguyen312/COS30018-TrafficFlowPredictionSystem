@@ -1,4 +1,5 @@
 from scats import Scats
+from path import Path
 import math, heapq
 from geopy.distance import geodesic as GD
 
@@ -25,22 +26,10 @@ class World(object):
         print("-------------------------------")
         
         
-        path, total_travel_time = self.search(self.origin, self.destination, self.scats)
-
-        # Output the result
+        path = self.search(self.origin, self.destination, self.scats)
+        
         if path:
-            print("Path found:")
-            total_distance_travelled = 0
-            
-            for scat in path:
-                print(f"{scat.scats_id} - {scat.scat_name}")
-                total_distance_travelled = scat.distance_travelled  # Get the total distance traveled for the last SCATS in the path
-            
-            print(f"Length: {len(path)}")
-            print(f"Total distance traveled: {total_distance_travelled} km")
-            print(f"Total travel time: {total_travel_time / 60} mins")
-        else:
-            print("No path found")
+            print(path)
         
     def calculateHeuristicCost(self, scat, destination_scat, speed):
         hCost = (math.sqrt((destination_scat.latitude - scat.latitude)**2 + (destination_scat.longitude - scat.longitude)**2) / speed) * 3600 #converting from hour -> sec
@@ -77,10 +66,11 @@ class World(object):
             if (current_scat.scats_id == destination):
                 path = []
                 total_travel_time = current_scat.travel_time
+                total_distance = current_scat.distance_travelled
                 while current_scat:
                     path.append(current_scat)
                     current_scat = current_scat.parent
-                return path[::-1], total_travel_time  # Return the path from start to goal
+                return Path(path[::-1], total_distance, total_travel_time)  # Return the path from start to goal
         
             closed_list.add(current_scat.scats_id)  # Mark current node as evaluated
 
