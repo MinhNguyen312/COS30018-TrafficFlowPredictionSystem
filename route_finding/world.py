@@ -9,6 +9,7 @@ class World(object):
         self.origin = origin
         self.destination = destination
         self.scats = []
+        self.critical_scats = set()
 
         for index, row in data.iterrows():
             scats_id = row['SCATS_Number']
@@ -18,10 +19,14 @@ class World(object):
             longitude = row['NB_LONGITUDE']
 
             converted_neighbors = neighbors.split(" ")
+            if len(converted_neighbors) < 3:
+                self.critical_scats.add(scats_id)
             
             self.scats.append(Scats(int(scats_id), scat_name, float(latitude), float(longitude), converted_neighbors))
 
+            
 
+        print(self.critical_scats)
         # print(self.scats)
         print("-------------------------------\n")
         
@@ -73,10 +78,15 @@ class World(object):
 
             # After a new path is found, update blocked_edges with the new path's edges
             for i in range(len(new_path.path) - 1):
-                blocked_edges.add((new_path.path[i].scats_id, new_path.path[i+1].scats_id)) 
-                blocked_edges.add((new_path.path[i + 1].scats_id, new_path.path[i].scats_id))  # Add the reverse edge as well
+                edge = (new_path.path[i].scats_id, new_path.path[i + 1].scats_id)
+                # Avoid blocking critical scat sites
+                if new_path.path[i].scats_id in self.critical_scats or new_path.path[i + 1].scats_id in self.critical_scats:
+                    print(f"Critical site, not blocking edge: {edge}")
+                    continue  # Skip blocking the critical site edge
+                blocked_edges.add(edge)
+                blocked_edges.add((new_path.path[i + 1].scats_id, new_path.path[i].scats_id))  # Add reverse edge
 
-            print(blocked_edges)
+            # print(blocked_edges)
             
         return paths
 
