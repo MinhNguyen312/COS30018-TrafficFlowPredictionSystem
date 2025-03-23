@@ -4,7 +4,7 @@ import math, heapq
 from geopy.distance import geodesic as GD
 
 class World(object):
-    def __init__(self, data, origin = 970, destination = 3001):
+    def __init__(self, data, origin = 3120, destination = 4034):
         self.data = data
         self.origin = origin
         self.destination = destination
@@ -22,37 +22,85 @@ class World(object):
             self.scats.append(Scats(int(scats_id), scat_name, float(latitude), float(longitude), converted_neighbors))
 
 
-        print(self.scats)
-        print("-------------------------------")
+        # print(self.scats)
+        print("-------------------------------\n")
         
         
-        path = self.search(self.origin, self.destination, self.scats)
+        paths = self.search(self.origin, self.destination, self.scats)
         
-        if path:
-            print(path)
+        if paths:
+            print(f"Origin: {paths[0].origin_scat}Destination: {paths[0].destination_scat}")
+    
+            i = 1
+            for path in paths:
+                print(f"----- Route {i} -----")
+                print(path)
+                print("\n")
+                i += 1
+        else:
+            print("Error: Fail to compute path.\n")
+            print("-------------------------------")
+            
         
-    def calculateHeuristicCost(self, scat, destination_scat, speed):
+    def calculate_heuristic_cost(self, scat, destination_scat, speed):
         hCost = (math.sqrt((destination_scat.latitude - scat.latitude)**2 + (destination_scat.longitude - scat.longitude)**2) / speed) * 3600 #converting from hour -> sec
         return hCost
     
-    def calculateTravelTime(self, distance, speed):
+    def calculate_travel_time(self, distance, speed):
         intersection_delay = 30
         travel_time = distance/speed * 3600 #convert to seconds
         travel_time += intersection_delay
 
         return travel_time
 
-    def search(self, origin, destination, scats = [], speed = 60):
+
+
+    def search(self, origin, destination, scats, speed=60):
+        paths = []
+        blocked_edges = set()
+
+        while (len(paths) < 5):
+            # Create a temporary blocked edges set for the current iteration
+            temp_blocked_edges = set(blocked_edges) 
+
+            # Try to find a new path by excluding the nodes from the previous path
+            new_path = self.search_a_star_with_blocking(origin, destination, scats, temp_blocked_edges, speed)
+
+            if not new_path:
+                break  # No more valid paths found
+
+            paths.append(new_path)
+
+            # After a new path is found, update blocked_edges with the new path's edges
+            for i in range(len(new_path.path) - 1):
+                blocked_edges.add((new_path.path[i].scats_id, new_path.path[i+1].scats_id)) 
+                blocked_edges.add((new_path.path[i + 1].scats_id, new_path.path[i].scats_id))  # Add the reverse edge as well
+
+            print(blocked_edges)
+            
+        return paths
+
+
+    def search_a_star_with_blocking(self, origin, destination, scats, blocked_edges, speed):
+        self.reset_props(scats) # resetting the costs of each scat after each search
+
         open_list = []
         closed_list = set()
 
         scats_dict = {scat.scats_id: scat for scat in scats}
 
         origin_scat = scats_dict.get(origin)
-        destination_scat = scats_dict.get(destination)  
+        destination_scat = scats_dict.get(destination)
+
+        if (not origin_scat): 
+            print(f"Error: Origin SCATS Site - {origin} is invalid.")
+            return None
+        
+        if (not destination_scat):
+            print(f"Error: Destination SCATS Site - {destination} is invalid.")
 
         origin_scat.gCost = 0
-        origin_scat.hCost = self.calculateHeuristicCost(origin_scat, destination_scat, 60)
+        origin_scat.hCost = self.calculate_heuristic_cost(origin_scat, destination_scat, speed)
         origin_scat.fCost = origin_scat.gCost + origin_scat.hCost
         origin_scat.travel_time = 0
 
@@ -70,13 +118,19 @@ class World(object):
                 while current_scat:
                     path.append(current_scat)
                     current_scat = current_scat.parent
-                return Path(path[::-1], total_distance, total_travel_time)  # Return the path from start to goal
+                return Path(path[::-1], origin_scat, destination_scat, total_distance, total_travel_time)  # Return the path from start to goal
         
             closed_list.add(current_scat.scats_id)  # Mark current node as evaluated
 
             for neighbor_id in current_scat.neighbors:
+                # **Correct edge blocking condition**:
+                # Check if the edge (current_scat -> neighbor_id) or (neighbor_id -> current_scat) is in blocked_edges
+                if (current_scat.scats_id, neighbor_id) in blocked_edges or (neighbor_id, current_scat.scats_id) in blocked_edges:
+                    continue  # Skip this neighbor since it's part of a blocked edge
+                         
+                
                 neighbor_scat = scats_dict.get(neighbor_id)
-
+            
                 if (neighbor_id in closed_list):
                     continue
 
@@ -84,12 +138,12 @@ class World(object):
                 
                 # travel_distance = math.sqrt(((neighbor_scat.latitude - current_scat.latitude) * 111)**2 + ((neighbor_scat.longitude - current_scat.longitude) * 111 * math.cos(math.radians(neighbor_scat.latitude)))**2)
                 travel_distance = GD((neighbor_scat.latitude, neighbor_scat.longitude), (current_scat.latitude, current_scat.longitude))
-                g = current_scat.gCost + self.calculateHeuristicCost(current_scat, neighbor_scat, speed) 
-                h = self.calculateHeuristicCost(neighbor_scat, destination_scat, speed)  # Heuristic based on distance to goal
+                g = current_scat.gCost + self.calculate_heuristic_cost(current_scat, neighbor_scat, speed) 
+                h = self.calculate_heuristic_cost(neighbor_scat, destination_scat, speed)  # Heuristic based on distance to goal
                 
                 # Travel time for the current segment
                 
-                total_travel_time = self.calculateTravelTime(travel_distance.km, speed)
+                total_travel_time = self.calculate_travel_time(travel_distance.km, speed)
 
                 # If the new path to the neighbor is better (lower cost), update its g, h, f, and parent
                 if g < neighbor_scat.gCost:
@@ -108,6 +162,16 @@ class World(object):
         # print(f"destination: {destination_scat}")
 
         return None
+    
+    def reset_props(self, scats):
+        for scat in scats:
+            scat.gCost = float('inf')
+            scat.hCost = 0
+            scat.fCost = float('inf') # f = g + h
+            scat.parent = None
+            scat.distance_travelled = 0
+            scat.travel_time = 0
+        
 
 
 

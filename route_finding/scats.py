@@ -26,7 +26,7 @@ class Scats(object):
 
 
     def __repr__(self):
-        return f"SCATS_ID: {self.scats_id}, Name: {self.scat_name}, Latitude: {self.latitude}, Longitude: {self.longitude}, Neighbors: {self.neighbors}\n"
+        return f"{self.scats_id} - {self.scat_name}: | Latitude: {self.latitude} | Longitude: {self.longitude} | Neighbors: {self.neighbors} |\n"
     
      # Compare SCATS based on their total cost (f = g + h)
     def __lt__(self, other):
