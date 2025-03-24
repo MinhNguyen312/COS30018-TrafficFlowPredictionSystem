@@ -9,7 +9,6 @@ class World(object):
         self.origin = origin
         self.destination = destination
         self.scats = []
-        self.critical_scats = set()
 
         for index, row in data.iterrows():
             scats_id = row['SCATS_Number']
@@ -19,15 +18,14 @@ class World(object):
             longitude = row['NB_LONGITUDE']
 
             converted_neighbors = neighbors.split(" ")
-            if len(converted_neighbors) < 3:
-                self.critical_scats.add(scats_id)
+
             
             self.scats.append(Scats(int(scats_id), scat_name, float(latitude), float(longitude), converted_neighbors))
 
             
 
-        print(self.critical_scats)
-        # print(self.scats)
+    
+    
         print("-------------------------------\n")
         
         
@@ -64,31 +62,71 @@ class World(object):
         paths = []
         blocked_edges = set()
 
-        while (len(paths) < 5):
-            # Create a temporary blocked edges set for the current iteration
-            temp_blocked_edges = set(blocked_edges) 
+        # Find the first shortest path
+        root_path = self.search_a_star_with_blocking(origin, destination, scats, blocked_edges, speed)
+        if root_path:
+            paths.append(root_path)
 
-            # Try to find a new path by excluding the nodes from the previous path
-            new_path = self.search_a_star_with_blocking(origin, destination, scats, temp_blocked_edges, speed)
+        # Now, for each new path, block one edge from the root path and find the next shortest path
+        for _ in range(4):  # We want 5 paths in total, so we find 4 more
+            # Block one edge at a time from the root path
+            for i in range(len(root_path.path) - 1):
+                # Create a temporary blocked edges set
+                temp_blocked_edges = set(blocked_edges)
 
-            if not new_path:
-                break  # No more valid paths found
+                # Block the edge between two nodes
+                edge = (root_path.path[i].scats_id, root_path.path[i + 1].scats_id)
+                reverse_edge = (root_path.path[i + 1].scats_id, root_path.path[i].scats_id)
 
-            paths.append(new_path)
+                # Add the edge to the blocked set
+                temp_blocked_edges.add(edge)
+                temp_blocked_edges.add(reverse_edge)
+                print(f"Blocking edge: {edge}")
 
-            # After a new path is found, update blocked_edges with the new path's edges
-            for i in range(len(new_path.path) - 1):
-                edge = (new_path.path[i].scats_id, new_path.path[i + 1].scats_id)
-                # Avoid blocking critical scat sites
-                if new_path.path[i].scats_id in self.critical_scats or new_path.path[i + 1].scats_id in self.critical_scats:
-                    print(f"Critical site, not blocking edge: {edge}")
-                    continue  # Skip blocking the critical site edge
-                blocked_edges.add(edge)
-                blocked_edges.add((new_path.path[i + 1].scats_id, new_path.path[i].scats_id))  # Add reverse edge
+                # Find the new path with this edge blocked
+                new_path = self.search_a_star_with_blocking(origin, destination, scats, temp_blocked_edges, speed)
 
-            # print(blocked_edges)
-            
+                if new_path:
+                    paths.append(new_path)
+                    # Add the newly blocked edges to the main blocked set for future iterations
+                    blocked_edges.add(edge)
+                    blocked_edges.add(reverse_edge)
+
+                # Break if we found 5 paths
+                if len(paths) >= 5:
+                    break
+
         return paths
+        # paths = []
+        # blocked_edges = set()
+
+        # while (len(paths) < 5):
+        #     # Create a temporary blocked edges set for the current iteration
+        #     temp_blocked_edges = set(blocked_edges) 
+
+        #     # Try to find a new path by excluding the nodes from the previous path
+        #     new_path = self.search_a_star_with_blocking(origin, destination, scats, temp_blocked_edges, speed)
+
+        #     if not new_path:
+        #         break  # No more valid paths found
+
+        #     paths.append(new_path)
+
+        #     # After a new path is found, update blocked_edges with the new path's edges
+        #     for i in range(len(new_path.path) - 1):
+        #         edge = (new_path.path[i].scats_id, new_path.path[i + 1].scats_id)
+        #         # Avoid blocking critical scat sites
+        #         if new_path.path[i].scats_id in self.critical_scats or new_path.path[i + 1].scats_id in self.critical_scats:
+        #             if len(new_path.path[i].neighbors) <= 2:
+        #                 print(f"Critical site, not blocking edge: {edge}")
+        #                 continue  # Skip blocking the critical site edge
+        #         blocked_edges.add(edge)
+        #         blocked_edges.add((new_path.path[i + 1].scats_id, new_path.path[i].scats_id))  # Add reverse edge
+        #         print(f"Blocked: {blocked_edges}")
+
+        #     # print(blocked_edges)
+            
+        # return paths
 
 
     def search_a_star_with_blocking(self, origin, destination, scats, blocked_edges, speed):
