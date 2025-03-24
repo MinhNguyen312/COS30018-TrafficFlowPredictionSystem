@@ -86,7 +86,7 @@ class World(object):
                 # Find the new path with this edge blocked
                 new_path = self.search_a_star_with_blocking(origin, destination, scats, temp_blocked_edges, speed)
 
-                if new_path:
+                if new_path and new_path not in paths:
                     paths.append(new_path)
                     # Add the newly blocked edges to the main blocked set for future iterations
                     blocked_edges.add(edge)
@@ -95,6 +95,16 @@ class World(object):
                 # Break if we found 5 paths
                 if len(paths) >= 5:
                     break
+
+            # lowest_cost_path = None
+            # for path in temp_paths:
+            #     lowest_cost = 99999999999999999 # placeholder for largest int
+            #     if (path.time < lowest_cost):
+            #         lowest_cost = path.time
+            #         lowest_cost_path = path
+            
+            # paths.append(lowest_cost_path)
+            
 
         return paths
         # paths = []

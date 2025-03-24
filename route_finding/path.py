@@ -7,6 +7,14 @@ class Path(object):
         self.total_distance = total_distance
         self.time = time
 
+    def __eq__(self, other):
+        """Check if two paths are the same."""
+        return [scat.scats_id for scat in self.path] == [scat.scats_id for scat in other.path]
+
+    def __hash__(self):
+        """Hash paths based on the sequence of scat ids."""
+        return hash(tuple(scat.scats_id for scat in self.path))
+
     def __repr__(self):
         output = ""
         for scat in self.path:
