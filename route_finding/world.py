@@ -1,5 +1,5 @@
-from scats import Scats
-from path import Path
+from route_finding.scats import Scats
+from route_finding.path import Path
 import math, heapq
 from geopy.distance import geodesic as GD
 
@@ -29,20 +29,20 @@ class World(object):
         print("-------------------------------\n")
         
         
-        paths = self.search(self.origin, self.destination, self.scats)
+        # paths = self.search(self.origin, self.destination, self.scats)
         
-        if paths:
-            print(f"Origin: {paths[0].origin_scat}Destination: {paths[0].destination_scat}")
+        # if paths:
+        #     print(f"Origin: {paths[0].origin_scat}Destination: {paths[0].destination_scat}")
     
-            i = 1
-            for path in paths:
-                print(f"----- Route {i} -----")
-                print(path)
-                print("\n")
-                i += 1
-        else:
-            print("Error: Fail to compute path.\n")
-            print("-------------------------------")
+        #     i = 1
+        #     for path in paths:
+        #         print(f"----- Route {i} -----")
+        #         print(path)
+        #         print("\n")
+        #         i += 1
+        # else:
+        #     print("Error: Fail to compute path.\n")
+        #     print("-------------------------------")
             
         
     def calculate_heuristic_cost(self, scat, destination_scat, speed):
@@ -56,7 +56,8 @@ class World(object):
 
         return travel_time
 
-
+    def search_no_param(self):
+        return self.search(self.origin, self.destination, self.scats)
 
     def search(self, origin, destination, scats, speed=60):
         paths = []
@@ -81,7 +82,6 @@ class World(object):
                 # Add the edge to the blocked set
                 temp_blocked_edges.add(edge)
                 temp_blocked_edges.add(reverse_edge)
-                print(f"Blocking edge: {edge}")
 
                 # Find the new path with this edge blocked
                 new_path = self.search_a_star_with_blocking(origin, destination, scats, temp_blocked_edges, speed)
