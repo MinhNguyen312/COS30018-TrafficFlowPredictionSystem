@@ -102,3 +102,6 @@ ENV/
 
 # Unprocessed Data
 Scats-Data-October-2006.xls
+__pycache__/
+*.pyc
+*.pyo

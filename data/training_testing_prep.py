@@ -30,14 +30,14 @@ def split_and_save_data(location_number):
 
 def main():
     # Get list of all processed data files
-    files = [f for f in os.listdir('.') if f.endswith('_flow_processed.csv')]
-    location_numbers = [f.split('_')[0] for f in files]
+    # files = [f for f in os.listdir('.') if f.endswith('_flow_processed.csv')]
+    # location_numbers = [f.split('_')[0] for f in files]
     
-    print(f"Found {len(location_numbers)} locations to process")
+    # print(f"Found {len(location_numbers)} locations to process")
     
-    # Process each location
-    for location in location_numbers:
-        split_and_save_data(location)
+    # # Process each location
+    # for location in location_numbers:
+        split_and_save_data(970)
         
 if __name__ == "__main__":
     main()
