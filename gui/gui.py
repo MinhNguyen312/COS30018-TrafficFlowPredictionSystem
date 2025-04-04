@@ -28,7 +28,7 @@ def compute_date():
 site_data = pd.read_csv("../data/Scats Data.csv", encoding='utf-8', sep='\t').fillna(0)
 
 app = tk.Tk()
-app.geometry("600x800")
+app.geometry("600x750")
 
 app.grid_columnconfigure(0, weight=1)
 app.resizable(False, False)
@@ -59,7 +59,7 @@ predict_scat_entry = Entry(app, width=30)
 predict_scat_entry.grid(row=9, pady=5)
 
 # Create a Text widget to display multi-line text, but set it to readonly (non-editable)
-text_box = tk.Text(app, height=15, width=60)
+text_box = tk.Text(app, height=20, width=60)
 text_box.config(state=tk.DISABLED)  # Set to read-only (non-editable)
 text_box.grid(row=11, pady=20)
 
@@ -110,16 +110,20 @@ def button_listener():
 #TODO: Implement predict module
 def handle_predict():
     scat_to_predict = predict_scat_entry.get()
+    date = compute_date()
 
     if not scat_to_predict:
         scat_to_predict = 3001
     else:
         scat_to_predict = int(scat_to_predict)
 
+    if not date:
+        date = "2022/5/10 10:00"
+
     world = World(site_data, scat_to_predict=scat_to_predict)
 
-    prediction = world.predict_traffic_flow()
-    text_data = f"Predicted traffic flow at Scat site {scat_to_predict}: {prediction}"
+    prediction = world.predict_traffic_flow(date)
+    text_data = f"Predicted flow at Scat site {scat_to_predict} at {date}: {prediction}"
 
     text_box.config(state=tk.NORMAL)
     text_box.delete(1.0, tk.END)

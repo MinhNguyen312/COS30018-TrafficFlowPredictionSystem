@@ -61,7 +61,7 @@ class World(object):
         return self.search(self.origin, self.destination, self.scats)
     
     # TODO: Implement predict traffic flow at one scat id
-    def predict_traffic_flow(self):
+    def predict_traffic_flow(self, date):
         prediction = 60
         return prediction
 
