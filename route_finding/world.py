@@ -4,10 +4,11 @@ import math, heapq
 from geopy.distance import geodesic as GD
 
 class World(object):
-    def __init__(self, data, origin = 3120, destination = 4034):
+    def __init__(self, data, origin = 970, destination = 3001, scat_to_predict=3001):
         self.data = data
         self.origin = origin
         self.destination = destination
+        self.scat_to_predict = scat_to_predict
         self.scats = []
 
         for index, row in data.iterrows():
@@ -58,6 +59,11 @@ class World(object):
 
     def search_no_param(self):
         return self.search(self.origin, self.destination, self.scats)
+    
+    # TODO: Implement predict traffic flow at one scat id
+    def predict_traffic_flow(self):
+        prediction = 60
+        return prediction
 
     def search(self, origin, destination, scats, speed=60):
         paths = []
@@ -96,47 +102,7 @@ class World(object):
                 if len(paths) >= 5:
                     break
 
-            # lowest_cost_path = None
-            # for path in temp_paths:
-            #     lowest_cost = 99999999999999999 # placeholder for largest int
-            #     if (path.time < lowest_cost):
-            #         lowest_cost = path.time
-            #         lowest_cost_path = path
-            
-            # paths.append(lowest_cost_path)
-            
-
         return paths
-        # paths = []
-        # blocked_edges = set()
-
-        # while (len(paths) < 5):
-        #     # Create a temporary blocked edges set for the current iteration
-        #     temp_blocked_edges = set(blocked_edges) 
-
-        #     # Try to find a new path by excluding the nodes from the previous path
-        #     new_path = self.search_a_star_with_blocking(origin, destination, scats, temp_blocked_edges, speed)
-
-        #     if not new_path:
-        #         break  # No more valid paths found
-
-        #     paths.append(new_path)
-
-        #     # After a new path is found, update blocked_edges with the new path's edges
-        #     for i in range(len(new_path.path) - 1):
-        #         edge = (new_path.path[i].scats_id, new_path.path[i + 1].scats_id)
-        #         # Avoid blocking critical scat sites
-        #         if new_path.path[i].scats_id in self.critical_scats or new_path.path[i + 1].scats_id in self.critical_scats:
-        #             if len(new_path.path[i].neighbors) <= 2:
-        #                 print(f"Critical site, not blocking edge: {edge}")
-        #                 continue  # Skip blocking the critical site edge
-        #         blocked_edges.add(edge)
-        #         blocked_edges.add((new_path.path[i + 1].scats_id, new_path.path[i].scats_id))  # Add reverse edge
-        #         print(f"Blocked: {blocked_edges}")
-
-        #     # print(blocked_edges)
-            
-        # return paths
 
 
     def search_a_star_with_blocking(self, origin, destination, scats, blocked_edges, speed):

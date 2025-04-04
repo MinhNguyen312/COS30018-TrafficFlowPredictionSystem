@@ -28,7 +28,7 @@ def compute_date():
 site_data = pd.read_csv("../data/Scats Data.csv", encoding='utf-8', sep='\t').fillna(0)
 
 app = tk.Tk()
-app.geometry("600x600")
+app.geometry("600x800")
 
 app.grid_columnconfigure(0, weight=1)
 app.resizable(False, False)
@@ -37,11 +37,12 @@ app.title("Traffic Flow Prediction System")
 
 origin_label = Label(app, text='Origin: *', font=("Arial", 13)).grid(row=0, pady=5)
 destination_label = Label(app, text='Destination: *', font=("Arial", 13)).grid(row=2, pady=5)
-combo_box_label = tk.Label(app, text="Select your preferred model: *", font=("Arial", 13)).grid(row=4, pady=5)
-date_label = tk.Label(app, text="Date/Time: *", font=("Arial", 13)).grid(row=6, pady=5)
+combo_box_label = Label(app, text="Select your preferred model: *", font=("Arial", 13)).grid(row=4, pady=5)
+date_label = Label(app, text="Date/Time: *", font=("Arial", 13)).grid(row=6, pady=5)
+predict_flow_label = Label(app, text="Enter a Scat ID to predict traffic flow:", font=("Arial", 13)).grid(row=8, pady=5)
 
 # Create a Combobox widget
-combo_box = ttk.Combobox(app, width=30, values=["LSTM", "GRU", "SAES"], state="readonly")
+combo_box = ttk.Combobox(app, width=30, values=["LSTM", "GRU", "SAES", "XGBoost"], state="readonly")
 combo_box.set("LSTM")
 combo_box.grid(row=5, pady=5)
 
@@ -54,10 +55,13 @@ destination_entry.grid(row=3, pady=5)
 date_entry = Entry(app, width=30,)
 date_entry.grid(row=7, pady=5)
 
+predict_scat_entry = Entry(app, width=30)
+predict_scat_entry.grid(row=9, pady=5)
+
 # Create a Text widget to display multi-line text, but set it to readonly (non-editable)
 text_box = tk.Text(app, height=15, width=60)
 text_box.config(state=tk.DISABLED)  # Set to read-only (non-editable)
-text_box.grid(row=9, pady=20)
+text_box.grid(row=11, pady=20)
 
 def find_route(site_data):
     origin_id = compute_origin()
@@ -67,8 +71,12 @@ def find_route(site_data):
 
     if not origin_id:
         origin_id = 970
+    else: 
+        origin_id = int(origin_id)
     if not destination_id:
         destination_id = 3001
+    else:
+        destination_id = int(destination_id)
 
     world = World(site_data, origin_id, destination_id)
     paths = world.search_no_param()
@@ -99,7 +107,31 @@ def button_listener():
     text_box.delete(1.0, tk.END)
     text_box.insert(tk.END, text_data)
 
-ttk.Button(app, width=15, text="Find routes", command=button_listener).grid(row=8, pady=10)
+#TODO: Implement predict module
+def handle_predict():
+    scat_to_predict = predict_scat_entry.get()
+
+    if not scat_to_predict:
+        scat_to_predict = 3001
+    else:
+        scat_to_predict = int(scat_to_predict)
+
+    world = World(site_data, scat_to_predict=scat_to_predict)
+
+    prediction = world.predict_traffic_flow()
+    text_data = f"Predicted traffic flow at Scat site {scat_to_predict}: {prediction}"
+
+    text_box.config(state=tk.NORMAL)
+    text_box.delete(1.0, tk.END)
+    text_box.insert(tk.END, text_data)
+
+    
+
+button_frame = tk.Frame(app)
+button_frame.grid(row=10,pady=10)
+ttk.Button(button_frame, width=15, text="Find routes", command=button_listener).pack(side="left",padx=5)
+ttk.Button(button_frame, width=15, text="Predict", command=handle_predict).pack(side="right",padx=5)
+
 
 
 
